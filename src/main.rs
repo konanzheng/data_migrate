@@ -15,6 +15,9 @@ async fn main() -> Result<(), sqlx::Error>{
     // let mut url="";
     if args.len() > 1 {
         url = &args[1];
+    } else {
+        println!("运行需要数据库连接字符串,例如: ./data_migrate.exe {}", url);
+        return Ok(());
     }
     let now = Instant::now();
     const SIZE:u32 = 100;
@@ -29,18 +32,26 @@ async fn main() -> Result<(), sqlx::Error>{
     for handle in handles {
         handle.await;
     }
-    // 循环查询pid ,根据pid 更新数据,每次查二十条数据
-    // let m_row = sqlx::query("select min(pid) as min_pid,max(pid) as max_pid from s_sxjchistorymark").fetch_one(&pool).await?;
-    let min_pid = 6985;
-    let max_pid = 28872;
-    let mut curr_pid:u32= 6985;
-    while curr_pid< max_pid {
-        let sql = format!("select FLOOR(pid) as pid from s_sxjchistorymark where pid >= {}  group by pid order by pid limit {}",curr_pid,100);
+    // 循环查询pid ,每次查1000条数据,pid %100 后放到对应的集合中，然后循环集合更新数据，每个集合对应一个表，一个insert语句
+    let m_row = sqlx::query("select FLOOR(min(pid)) as min_pid,FLOOR(max(pid)) as max_pid from s_sxjchistorymark").fetch_one(&pool).await?;
+    let min_pid:u32 = m_row.get_unchecked("min_pid");
+    let max_pid:u32 = m_row.get_unchecked("max_pid");
+    let mut curr_pid:usize= min_pid as usize;
+    while curr_pid< max_pid as usize {
+        let sql = format!("select FLOOR(pid) as pid from s_sxjchistorymark where pid >= {}  group by pid order by pid limit {}",curr_pid,1000);
         let mut handles2 = Vec::with_capacity(100);
+        let mut pids = Vec::with_capacity(100);
+        for i in 0..100 {
+            pids.push(Vec::<usize>::new());
+        }
         let pid_rows = sqlx::query(&sql).fetch_all(&pool).await?;
         for row in  pid_rows {
-            curr_pid= row.get_unchecked("pid");
-            handles2.push(tokio::spawn(execute(curr_pid,pool.clone())));
+            let pid:u32 = row.get_unchecked("pid");
+            curr_pid = pid as usize;
+            pids[curr_pid%100].push(curr_pid);
+        }
+        for i in 0..100{
+            handles2.push(tokio::spawn(execute(pids.get(i).unwrap().to_vec(),i,pool.clone())));
         }
         for handle in handles2 {
             handle.await;
@@ -52,10 +63,12 @@ async fn main() -> Result<(), sqlx::Error>{
     println!("总耗时：{} ms", now.elapsed().as_millis());
     Ok(())
 }
-async fn execute(pid: u32,pool2:MySqlPool ){
-    let mod_pid = pid%100;
-    let update_sql = format!("insert into s_sxjchistorymark{} select * from s_sxjchistorymark where pid = {} ",mod_pid,pid);
-    // sqlx::query(&update_sql).execute(&pool2).await;
+async fn execute(pid: Vec::<usize>,mod_pid:usize,pool2:MySqlPool ){
+    let mut pid_where = "-1".to_string();
+    for p in pid {
+        pid_where = format!("{},{}",pid_where,p);
+    }
+    let update_sql = format!("insert into s_sxjchistorymark{} select * from s_sxjchistorymark where pid in ({}) ",mod_pid,pid_where);
     pool2.execute(sqlx::query(&update_sql)).await;
 }
 async fn truncate(i: u8,pool2:MySqlPool ){
@@ -71,6 +84,4 @@ async fn truncate(i: u8,pool2:MySqlPool ){
             println!("清空表{}失败,详细错误信息:{:?}",i,e);
         }
     }
-    // conn.detach();
-    println!("db_pool size: {},num_idle: {}", pool2.size(), pool2.num_idle());
 }
