@@ -13,15 +13,37 @@ async fn main() -> Result<(), sqlx::Error>{
     let args: Vec<String> = env::args().collect();
     let mut url = "mysql://hams:hams@localhost:3306/ylj";
     // let mut url="";
+    let mut line = String::new();
     if args.len() > 1 {
         url = &args[1];
     } else {
-        println!("运行需要数据库连接字符串,例如: ./data_migrate.exe {}", url);
-        return Ok(());
+        println!("开始执行前确认下列三件事,确认后请输入数据库连接字符串,格式: mysql://user:pass@host:port/dbname,例如: mysql://hams:hams@localhost:3306/ylj");
+        println!("A. 四性检测mark分表已生成100张表结构:S_SXJCHISTORYMARK0到S_SXJCHISTORYMARK99");
+        println!("B. 处理历史数据过程中不能操作四性检测相关任何功能，包括新旧接口。");
+        println!("C. 数据库连接字符串是正式环境或者测试环境请确认清楚。");
+        std::io::stdin().read_line(&mut line).unwrap();
+        url = line.trim();
+    }
+    let pool :MySqlPool ;
+    let mut flag=true;
+    loop {
+        let c =  mysql::MySqlPoolOptions::new().min_connections(SIZE).max_connections(SIZE).connect_timeout(Duration::from_secs(30)).idle_timeout(Duration::from_secs(10)).connect(url).await;
+        match c {
+            Ok(r) => {
+                pool = r;
+                println!("数据库连接成功: {},开始处理", url);
+                break;
+            },
+            Err(e) => {
+                println!("字符串:{} 连接失败,详细错误信息:{:?},\n请重新输入连接字符串",url,e);
+                line.clear();
+                std::io::stdin().read_line(&mut line).unwrap();
+                url = line.trim();
+            }
+        }
     }
     let now = Instant::now();
     const SIZE:u32 = 100;
-    let pool = mysql::MySqlPoolOptions::new().min_connections(SIZE).max_connections(SIZE).connect_timeout(Duration::from_secs(30)).idle_timeout(Duration::from_secs(10)).connect(url).await?;
     println!("db_pool is : {:?}", pool);
     // 删除 表中数据
     let mut handles = Vec::with_capacity(100);
