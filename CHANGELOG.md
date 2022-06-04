@@ -13,3 +13,7 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 ## [1.1.1] - 2022-06-04
 
 - Add changelog.md file to the project.
+
+## [1.1.2] - 2022-06-04
+
+- Add bin name
