@@ -1,5 +1,6 @@
 use sqlx::{Executor, MySqlPool, mysql,Row,ConnectOptions};
 use sqlx::mysql::MySqlConnectOptions;
+use sqlx::mysql::MySqlSslMode;
 use std::str::FromStr;
 use std::time::Instant;
 use std::time::Duration;
@@ -36,6 +37,7 @@ async fn main() -> Result<(), sqlx::Error>{
     let pool :MySqlPool ;
     loop {
         let mut opts = MySqlConnectOptions::from_str(url.as_str()).unwrap();
+        opts = opts.ssl_mode(MySqlSslMode::Disabled);
         opts.disable_statement_logging();
         let c =  mysql::MySqlPoolOptions::new().min_connections(SIZE).max_connections(SIZE).connect_timeout(Duration::from_secs(60)).idle_timeout(Duration::from_secs(10))
         .connect_with(opts).await;
