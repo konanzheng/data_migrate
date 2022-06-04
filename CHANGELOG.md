@@ -10,6 +10,6 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 
 ## [Unreleased]
 
-## [1.1.0] - 2022-06-04
+## [1.1.1] - 2022-06-04
 
-- Add changelog.md file
+- Add changelog.md file to the project.
