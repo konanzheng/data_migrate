@@ -1,7 +1,7 @@
 name: Upload
-  # You may pin to the exact commit or the version.
-  # uses: taiki-e/upload-rust-binary-action@ce1352fa8c3a260a14f2ef7a5790b06cdfcce1aa
-  uses: taiki-e/upload-rust-binary-action@v1.3.0
+
+  - uses: actions/checkout@v3
+  - uses: taiki-e/upload-rust-binary-action@v1.3.0
   with:
     # Binary name (non-extension portion of filename) to build and upload
     bin: data_migrate
