@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --release
+      run: cargo build
     - name: Release
       - uses: softprops/action-gh-release@v1
         with:
