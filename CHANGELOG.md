@@ -21,3 +21,7 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 ## [1.1.3] - 2022-06-05
 
 - Add upload.yml for action upload
+
+## [1.1.4] - 2022-06-05
+
+- change upload action name
