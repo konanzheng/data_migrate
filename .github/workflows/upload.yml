@@ -19,5 +19,6 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/release/data_migrate
+          fail_on_unmatched_files: true
+          files: target/debug/data_migrate
           token: ${{ secrets.GITHUB_TOKEN }}
