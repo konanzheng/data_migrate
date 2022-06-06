@@ -10,15 +10,13 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build
+        run: cargo build
     - name: Release
-      - uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           files: target/release/data_migrate
           token: ${{ secrets.GITHUB_TOKEN }}
