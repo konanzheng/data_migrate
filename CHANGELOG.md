@@ -30,3 +30,7 @@ Note: In this file, do not use the hard wrap in the middle of a sentence for com
 ## [1.1.5] - 2022-06-05
 
 - change upload action name,add tag 
+
+## [1.1.6] - 2022-06-05
+
+- 增加readme ，将项目改成public解决release不能下载的问题
